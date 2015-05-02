@@ -75,6 +75,15 @@ module Devise
   # paranoid_verification will regenerate verifacation code after faild attempt
   mattr_accessor :paranoid_code_regenerate_after_attempt
   @@paranoid_code_regenerate_after_attempt = 10
+
+  mattr_accessor :session_limitable_on_unique_id
+  @@session_limitable_on_unique_id = true
+
+  mattr_accessor :session_limitable_on_user_agent
+  @@session_limitable_on_user_agent = false
+
+  mattr_accessor :session_limitable_on_ip
+  @@session_limitable_on_ip = false
 end
 
 # an security extension for devise
@@ -92,7 +101,6 @@ Devise.add_module :password_expirable, controller: :password_expirable, model: '
 Devise.add_module :secure_validatable, model: 'devise_security_extension/models/secure_validatable'
 Devise.add_module :password_archivable, model: 'devise_security_extension/models/password_archivable'
 Devise.add_module :session_limitable, model: 'devise_security_extension/models/session_limitable'
-Devise.add_module :session_non_transferable, model: 'devise_security_extension/models/session_non_transferable'
 Devise.add_module :expirable, model: 'devise_security_extension/models/expirable'
 Devise.add_module :security_questionable, model: 'devise_security_extension/models/security_questionable'
 Devise.add_module :paranoid_verification, controller: :paranoid_verification_code, model: 'devise_security_extension/models/paranoid_verification', route: :verification_code

@@ -3,10 +3,14 @@
 # and on authentication. Retrieving the user from session (:fetch) does
 # not trigger it.
 Warden::Manager.after_set_user :except => :fetch do |record, warden, options|
-  if record.respond_to?(:update_unique_session_id!) && warden.authenticated?(options[:scope])
-    unique_session_id = Devise.friendly_token
-    warden.session(options[:scope])['unique_session_id'] = unique_session_id
-    record.update_unique_session_id!(unique_session_id)
+  if warden.authenticated?(options[:scope])
+    SessionLimitableEvaluator
+      .new(record)
+      .evaluate_sign_in do
+        unique_session_id = Devise.friendly_token
+        warden.session(options[:scope])['unique_session_id'] = unique_session_id
+        record.update_unique_session_id!(unique_session_id)
+      end
   end
 end
 
@@ -17,8 +21,11 @@ Warden::Manager.after_set_user :only => :fetch do |record, warden, options|
   scope = options[:scope]
   env   = warden.request.env
 
-  if record.respond_to?(:unique_session_id) && warden.authenticated?(scope) && options[:store] != false
-    if record.unique_session_id != warden.session(scope)['unique_session_id'] && !env['devise.skip_session_limitable']
+  if record.respond_to?(:unique_session_id) && warden.authenticated?(scope) && options[:store] != false && !env['devise.skip_session_limitable']
+    evaluator = SessionLimitableEvaluator.new(record)
+    evaluator.unique_session_id = warden.session(scope)['unique_session_id']
+
+    evaluator.evaluate_sign_out do
       warden.logout(scope)
       throw :warden, :scope => scope, :message => :session_limited
     end
